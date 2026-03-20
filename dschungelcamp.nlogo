@@ -59,6 +59,7 @@ links-own [
   encounters             ; Total number of encounters n
   cooperations           ; Number of cooperative encounters p
   relationship-type      ; "alliance" / "neutral" / "rival"
+  last-social-day        ; Day of last social encounter (prevents double counting)
 ]
 
 ; =============================================================================
@@ -172,6 +173,7 @@ to create-initial-network
       set encounters 0
       set cooperations 0
       set relationship-type "neutral"
+      set last-social-day -1
       set color gray
       set thickness 0.1
     ]
@@ -386,8 +388,10 @@ to social-encounter [agent-a agent-b]
   ; Both can cooperate (be friendly, share info) or defect (be hostile, withhold)
   let link-ab link [who] of agent-a [who] of agent-b
   if link-ab = nobody [ stop ]
+  if [last-social-day] of link-ab = current-day [ stop ]  ; Already interacted today
 
   ask link-ab [
+    set last-social-day current-day
     ; Each encounter counts as 2 interactions (one per agent)
     set encounters encounters + 2
 
@@ -491,14 +495,14 @@ to gossip-phase [active-agents]
         if partner-link != nobody [
           let indirect-trust [trust-value] of partner-link
 
-          ; Update my trust of gossip-target based on gossip
+          ; Update my trust of gossip-target via virtual encounters (consistent with Bayesian model)
           let my-link link who [who] of gossip-target
           if my-link != nobody [
-            let current-trust [trust-value] of my-link
-            let new-trust current-trust * (1 - gossip-spread-factor) + indirect-trust * gossip-spread-factor
             ask my-link [
-              set trust-value new-trust
-              update-link-appearance
+              let gossip-encounters gossip-spread-factor * 2
+              set encounters encounters + gossip-encounters
+              set cooperations cooperations + gossip-encounters * indirect-trust
+              update-trust-value
             ]
           ]
         ]
