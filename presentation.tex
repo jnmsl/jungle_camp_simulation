@@ -1,0 +1,185 @@
+\documentclass{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{dolphin}
+
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\title[Dschungelcamp Simulation]{Dschungelcamp: Agent Simulation of Social Dynamics}
+\subtitle{Trust, Reputation, and Alliance Formation in a Reality TV Setting}
+\author{LAMY Léo, MUSIL Jan, BUCHKREMER Jan}
+\institute[UPM]{Graph Analysis and Social Networks (2025-26)}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Table of Contents}
+    \tableofcontents
+\end{frame}
+
+% ---------------------------------------------------------------
+\section{Introduction}
+% ---------------------------------------------------------------
+
+\begin{frame}{1. Introduction}
+    \begin{itemize}
+        \item \textbf{Motivation:} Reality TV shows such as \textit{Ich bin ein Star -- Holt mich hier raus!} (Dschungelcamp) provide a natural laboratory for social dynamics.
+        \item \textbf{Setup:} A fixed group of contestants cooperates and competes; periodic votes eliminate one member until only the winner remains.
+        \item \textbf{Research Question:} Can we model and reproduce the emergent social structures of such shows using Multi-Agent Systems?
+    \end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------------
+\section{Model Design}
+% ---------------------------------------------------------------
+
+\begin{frame}{2. Agent Architecture (BDI)}
+    % TODO: BDI mapping table or diagram
+    %   Beliefs  = trust values toward each neighbor, own reputation, energy level
+    %   Desires  = survive (avoid elimination), win (be last standing)
+    %   Intentions = strategy-dependent action selection (cooperate/defect in challenges, vote target choice)
+    % Course parallel: Wooldridge's BDI framework, rational agents
+\end{frame}
+
+\begin{frame}{3. Agent Strategies \& Personality}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            % TODO: describe each strategy's behavior
+            %   Cooperator (green): reliable, almost always does challenges
+            %   Strategist (blue): selective cooperation based on trust/reputation
+            %   Free-rider (red): avoids challenges, exploits group
+            %   Social (yellow): builds connections, follows group consensus
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            % TODO: personality trait table
+            %   openness (0-1): likelihood to form new connections
+            %   loyalty (0-1): weight given to existing trust
+            %   bravery (0-1): willingness to accept challenges
+            %   Each strategy has different trait distributions
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{4. Trust Model (Mui et al.)}
+    % TODO: Direct trust — Beta distribution model
+    %   Formula: T_ab = (alpha + p) / (alpha + beta + n)
+    %   alpha, beta = prior parameters (1,1 = uniform prior)
+    %   p = cooperative encounters, n = total encounters
+    %   Trust updates after every challenge observation and social encounter
+    % Course parallel: Mui et al. computational trust, Beta distribution
+\end{frame}
+
+\begin{frame}{5. Gossip \& Reputation}
+    % TODO: Two mechanisms:
+    %   1) Gossip (indirect trust propagation):
+    %      T_ac(new) = T_ac * (1 - gamma) + T_bc * gamma
+    %      where gamma = gossip spread factor (0.3)
+    %      Agents ask a neighbor about a third party
+    %
+    %   2) Reputation (global score):
+    %      R_i = (1/|N|) * sum(T_ji) for all active neighbors j
+    %      Weighted average of all others' trust in agent i
+    %
+    % Course parallel: indirect trust, reputation systems, distributed trust
+\end{frame}
+
+% ---------------------------------------------------------------
+\section{Simulation Mechanics}
+% ---------------------------------------------------------------
+
+\begin{frame}{6. Simulation Phases \& Elimination}
+    % TODO: The 4 daily phases:
+    %   1. Challenge (Dschungelprüfung): one agent chosen, cooperate = earn food, defect = save energy
+    %   2. Food Sharing: resources distributed, daily energy cost applied
+    %   3. Social Interaction: 1-3 pairwise encounters per agent, trust updated
+    %   4. Elimination (every N days): agents vote, most votes = eliminated
+    %
+    % Voting strategies differ per type:
+    %   Cooperator: votes for least trusted (punish defectors)
+    %   Strategist: votes for highest reputation outside alliance (eliminate threats)
+    %   Free-rider: votes for whoever distrusts them most (self-preservation)
+    %   Social: follows alliance consensus
+    %
+    % Course parallel: game theory, cooperation vs. defection
+\end{frame}
+
+\begin{frame}{7. Cooperation vs.\ Defection}
+    % TODO: Game-theoretic framing
+    %   Challenge decisions: cooperate (earn food for group, lose energy) vs. defect (save energy, no food)
+    %   Social encounters: both agents independently decide to cooperate or defect
+    %   Strategy-dependent decision functions (show the logic)
+    %   Tension: short-term individual gain vs. long-term group benefit / reputation
+    % Course parallel: Prisoner's Dilemma, iterated games, social dilemmas
+\end{frame}
+
+% ---------------------------------------------------------------
+\section{Network Analysis \& Results}
+% ---------------------------------------------------------------
+
+\begin{frame}{8. Network Structure \& Evolution}
+    % TODO: Initial state: complete graph (all contestants know each other)
+    %   Alliance formation: mutual trust > 0.7 creates alliance links
+    %   Elimination shrinks the network: links hidden, layout updates
+    %   Link coloring: green (alliance, trust>0.7), red (rival, trust<0.3), gray (neutral)
+    %   Metrics: network density, clustering coefficient
+    % Course parallel: social network evolution, shrinking networks, community detection
+\end{frame}
+
+\begin{frame}{9. Results -- Strategy Survival \& Trust}
+    % TODO: Insert NetLogo plots/screenshots:
+    %   - Strategy Survival plot (which strategies last longest)
+    %   - Trust Evolution plot (average trust over time)
+    %   - Key findings: do cooperators or strategists tend to win?
+\end{frame}
+
+\begin{frame}{10. Results -- Network Metrics \& Cooperation}
+    % TODO: Insert NetLogo plots/screenshots:
+    %   - Network Metrics plot (density + clustering over time)
+    %   - Cooperation Rate plot
+    %   - Food & Energy plot
+    %   - Reputation Distribution
+    %   - Key findings: how do metrics change around elimination events?
+\end{frame}
+
+\begin{frame}{11. Demo / NetLogo Interface}
+    % TODO: Screenshot(s) of the NetLogo interface
+    %   Show the world view with agents, colored links, eliminated agents on the side
+    %   Show the control panel (sliders, buttons)
+    %   Show the plots panel
+    %   \includegraphics[width=\linewidth]{screenshot.png}
+\end{frame}
+
+% ---------------------------------------------------------------
+\section{Conclusion}
+% ---------------------------------------------------------------
+
+\begin{frame}{12. Conclusion \& Future Work}
+    \begin{enumerate}
+        \item \textbf{Summary:}
+        % TODO
+        \item \textbf{Key Findings:}
+        % TODO
+        \item \textbf{Limitations:}
+        % TODO
+        \item \textbf{Future Work:}
+        % TODO: viewer voting, challenge difficulty, strategy adaptation, emotional state, resource hoarding
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{References}
+    \footnotesize
+    \begin{thebibliography}{99}
+        \bibitem{Mui} Mui, L., Mohtashemi, M., \& Halberstadt, A. (2002). \textit{A Computational Model of Trust and Reputation}. HICSS.
+        \bibitem{Wooldridge} Wooldridge, M. (2002). \textit{An Introduction to Multiagent Systems}. Wiley.
+        \bibitem{NetLogo} Wilensky, U. (1999). \textit{NetLogo}. Center for Connected Learning, Northwestern University.
+    \end{thebibliography}
+\end{frame}
+
+\end{document}
