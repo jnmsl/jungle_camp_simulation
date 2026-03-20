@@ -53,11 +53,12 @@ turtles-own [
   voted-for              ; Who this agent voted for
 ]
 
-; --- Link (relationship) properties ---
-links-own [
-  trust-value            ; Current trust T_ab (0-1)
-  encounters             ; Total number of encounters n
-  cooperations           ; Number of cooperative encounters p
+; --- Directed link breed (A→B means "A's trust of B") ---
+directed-link-breed [trust-links trust-link]
+trust-links-own [
+  trust-value            ; A's trust of B: T_ab (0-1)
+  encounters             ; Encounters A observed of B's behavior
+  cooperations           ; Cooperative actions A observed from B
   relationship-type      ; "alliance" / "neutral" / "rival"
   last-social-day        ; Day of last social encounter (prevents double counting)
 ]
@@ -177,9 +178,9 @@ to set-personality-traits
 end
 
 to create-initial-network
-  ; Everyone starts with a link to everyone else (they're all in the same camp)
+  ; Everyone starts with directed trust links to everyone else (A→B = A's trust of B)
   ask turtles [
-    create-links-with other turtles [
+    create-trust-links-to other turtles [
       set trust-value 0.5  ; Neutral initial trust
       set encounters 0
       set cooperations 0
@@ -284,8 +285,8 @@ to challenge-phase [active-agents]
       set energy energy - 10  ; Challenges cost energy
 
       ; Update trust: all active agents observe this cooperation
-      ; Each link encounter is 1 observation of the challenger's action
-      let active-observer-links my-links with [other-end != nobody and not [eliminated?] of other-end]
+      ; in-trust-links = links FROM observers TO challenger = observers' trust of challenger
+      let active-observer-links my-in-trust-links with [not [eliminated?] of end1]
       let active-link-count count active-observer-links
       ask active-observer-links [
         set encounters encounters + 1
@@ -300,7 +301,7 @@ to challenge-phase [active-agents]
       set energy energy - 3  ; Small energy cost even for refusing
 
       ; Update trust: all active agents observe this defection
-      let active-observer-links my-links with [other-end != nobody and not [eliminated?] of other-end]
+      let active-observer-links my-in-trust-links with [not [eliminated?] of end1]
       let active-link-count count active-observer-links
       ask active-observer-links [
         set encounters encounters + 1
@@ -398,34 +399,41 @@ to social-interaction-phase [active-agents]
 end
 
 to social-encounter [agent-a agent-b]
-  ; A social encounter between two agents
-  ; Both can cooperate (be friendly, share info) or defect (be hostile, withhold)
-  let link-ab link [who] of agent-a [who] of agent-b
-  if link-ab = nobody [ stop ]
-  if [last-social-day] of link-ab = current-day [ stop ]  ; Already interacted today
+  ; A social encounter between two agents.
+  ; link-a-to-b (A→B) = A's trust of B, updated by B's behavior.
+  ; link-b-to-a (B→A) = B's trust of A, updated by A's behavior.
+  let link-a-to-b trust-link ([who] of agent-a) ([who] of agent-b)
+  if link-a-to-b = nobody [ stop ]
+  if [last-social-day] of link-a-to-b = current-day [ stop ]  ; Already interacted today
 
-  ask link-ab [
-    set last-social-day current-day
-    ; Each encounter counts as 2 interactions (one per agent)
-    set encounters encounters + 2
+  let link-b-to-a trust-link ([who] of agent-b) ([who] of agent-a)
+  if link-b-to-a = nobody [ stop ]
 
-    ; Determine if this is a cooperative encounter
-    let a-cooperates? [decide-social-cooperation link-ab] of agent-a
-    let b-cooperates? [decide-social-cooperation link-ab] of agent-b
+  ; Each agent decides based on their own trust of the other
+  let a-cooperates? [decide-social-cooperation (trust-link ([who] of agent-a) ([who] of agent-b))] of agent-a
+  let b-cooperates? [decide-social-cooperation (trust-link ([who] of agent-b) ([who] of agent-a))] of agent-b
 
-    ; Count each agent's cooperation separately
-    if a-cooperates? [
-      set cooperations cooperations + 1
-      set total-cooperations total-cooperations + 1
-    ]
-    if b-cooperates? [
-      set cooperations cooperations + 1
-      set total-cooperations total-cooperations + 1
-    ]
+  ; Mark both directions as interacted today
+  ask link-a-to-b [ set last-social-day current-day ]
+  ask link-b-to-a [ set last-social-day current-day ]
 
-    set total-interactions total-interactions + 2
+  ; A's trust of B rises if B cooperated, falls if B defected
+  ask link-a-to-b [
+    set encounters encounters + 1
+    if b-cooperates? [ set cooperations cooperations + 1 ]
     update-trust-value
   ]
+
+  ; B's trust of A rises if A cooperated, falls if A defected
+  ask link-b-to-a [
+    set encounters encounters + 1
+    if a-cooperates? [ set cooperations cooperations + 1 ]
+    update-trust-value
+  ]
+
+  if a-cooperates? [ set total-cooperations total-cooperations + 1 ]
+  if b-cooperates? [ set total-cooperations total-cooperations + 1 ]
+  set total-interactions total-interactions + 2
 end
 
 to-report decide-social-cooperation [the-link]
@@ -497,20 +505,24 @@ to gossip-phase [active-agents]
   ; Each agent asks one neighbor about a third party
   ask active-agents [
     let me self
-    let my-neighbors link-neighbors with [not eliminated? and not [hidden?] of link who [who] of myself]
+    ; Neighbors = agents I have a visible outgoing trust link to
+    let my-neighbors out-trust-link-neighbors with [
+      not eliminated? and
+      not [hidden?] of trust-link [who] of me who
+    ]
     if count my-neighbors >= 2 [
       ; Pick a neighbor to gossip with
       let gossip-partner one-of my-neighbors
       ; Pick a third agent to gossip about
       let gossip-target one-of (my-neighbors with [self != gossip-partner])
       if gossip-target != nobody and gossip-partner != nobody [
-        ; Get gossip-partner's trust of gossip-target
-        let partner-link link [who] of gossip-partner [who] of gossip-target
+        ; Get gossip-partner's trust of gossip-target (partner→target)
+        let partner-link trust-link ([who] of gossip-partner) ([who] of gossip-target)
         if partner-link != nobody [
           let indirect-trust [trust-value] of partner-link
 
-          ; Update my trust of gossip-target via virtual encounters (consistent with Bayesian model)
-          let my-link link who [who] of gossip-target
+          ; Update MY trust of gossip-target (me→target)
+          let my-link trust-link ([who] of me) ([who] of gossip-target)
           if my-link != nobody [
             ask my-link [
               let gossip-encounters gossip-spread-factor * 2
@@ -530,16 +542,16 @@ to update-alliances [active-agents]
   ; Agents with mutual high trust form alliances
   ask active-agents [
     let me self
-    let strong-allies link-neighbors with [
-      not eliminated? and
-      not [hidden?] of link who [who] of me and
-      [trust-value] of link who [who] of me > 0.7
+    ; Strong ally links = my outgoing trust links to non-eliminated agents with high trust
+    let strong-ally-links my-out-trust-links with [
+      not [eliminated?] of end2 and
+      not hidden? and
+      trust-value > 0.7
     ]
-    ifelse any? strong-allies [
+    ifelse any? strong-ally-links [
       ; Join the alliance of the most trusted ally, or form new one
-      let best-ally max-one-of strong-allies [
-        [trust-value] of link who [who] of myself
-      ]
+      let best-link max-one-of strong-ally-links [trust-value]
+      let best-ally [end2] of best-link
       if best-ally != nobody [
         ifelse [alliance-id] of best-ally != -1 [
           set alliance-id [alliance-id] of best-ally
@@ -596,10 +608,9 @@ to elimination-phase [active-agents]
       set label (word who " X")
       set num-eliminated num-eliminated + 1
 
-      ; Hide links of eliminated agent
-      ask my-links [
-        set hidden? true
-      ]
+      ; Hide directed trust links of eliminated agent
+      ask my-in-trust-links [ set hidden? true ]
+      ask my-out-trust-links [ set hidden? true ]
     ]
 
     ; Rearrange layout
@@ -609,10 +620,11 @@ end
 
 to-report choose-vote-target [candidates]
   ; BDI voting decision
+  ; trust-link [who] of myself who = voter's trust of candidate (voter→candidate)
   if strategy = "cooperator" [
     ; Vote for the person they trust least (punish defectors)
     report min-one-of candidates [
-      [trust-value] of link who [who] of myself
+      [trust-value] of trust-link [who] of myself who
     ]
   ]
   if strategy = "strategist" [
@@ -622,14 +634,14 @@ to-report choose-vote-target [candidates]
       report max-one-of non-allies [reputation-score]
     ] [
       report min-one-of candidates [
-        [trust-value] of link who [who] of myself
+        [trust-value] of trust-link [who] of myself who
       ]
     ]
   ]
   if strategy = "freerider" [
     ; Vote for most threatening agent: high reputation + low trust = likely to organize my elimination
     report max-one-of candidates [
-      reputation-score * (1 - [trust-value] of link who [who] of myself)
+      reputation-score * (1 - [trust-value] of trust-link [who] of myself who)
     ]
   ]
   if strategy = "social" [
@@ -651,12 +663,14 @@ to-report choose-vote-target [candidates]
 end
 
 to update-agent-reputation
-  ; Reputation = weighted average of all other active agents' trust in this agent
+  ; Reputation = average of all other active agents' trust IN this agent.
+  ; in-trust-link-neighbors = agents with a directed link TO me = agents who track my trustworthiness.
+  ; [out-trust-link-to me] of N = N's trust of me (N→me link).
   let me self
-  let active-neighbors link-neighbors with [not eliminated?]
+  let active-neighbors in-trust-link-neighbors with [not eliminated?]
   if any? active-neighbors [
     let total-trust sum [
-      [trust-value] of link who [who] of me
+      [trust-value] of out-trust-link-to me
     ] of active-neighbors
     set reputation-score total-trust / count active-neighbors
   ]
@@ -667,8 +681,8 @@ end
 ; =============================================================================
 
 to update-global-metrics [active-agents]
-  ; Average trust
-  let active-links links with [not hidden?]
+  ; Average trust across all visible directed trust-links
+  let active-links trust-links with [not hidden?]
   ifelse any? active-links [
     set avg-trust mean [trust-value] of active-links
   ] [
@@ -732,9 +746,10 @@ to-report avg-energy
 end
 
 to-report network-density
-  let active-links links with [not hidden?]
+  ; For a directed graph: max possible links = n*(n-1) (both directions, no self-loops)
+  let active-links trust-links with [not hidden?]
   let active-agents count turtles with [not eliminated?]
-  let max-links (active-agents * (active-agents - 1)) / 2
+  let max-links active-agents * (active-agents - 1)
   ifelse max-links > 0 [
     report count active-links / max-links
   ] [
@@ -743,29 +758,31 @@ to-report network-density
 end
 
 to-report clustering-coefficient
-  ; Average local clustering coefficient (visible links only)
+  ; Average local directed clustering coefficient (visible out-trust-links only).
+  ; For each agent, counts directed links among their out-neighbors.
+  ; possible = k*(k-1), actual = directed links found among neighbors.
   let active-agents turtles with [not eliminated?]
   ifelse count active-agents > 2 [
     let coefficients []
     ask active-agents [
       let me self
-      let my-neighbors link-neighbors with [
-        not eliminated? and not [hidden?] of link who [who] of me
+      let my-neighbors out-trust-link-neighbors with [
+        not eliminated? and not [hidden?] of trust-link [who] of me who
       ]
       let k count my-neighbors
       if k >= 2 [
-        let possible-connections k * (k - 1) / 2
+        let possible-connections k * (k - 1)
         let actual-connections 0
         ask my-neighbors [
           let me-neighbor self
           ask other my-neighbors [
-            let lnk link who [who] of me-neighbor
+            ; Check if there's a visible directed link from self to me-neighbor
+            let lnk trust-link who [who] of me-neighbor
             if lnk != nobody and not [hidden?] of lnk [
               set actual-connections actual-connections + 1
             ]
           ]
         ]
-        set actual-connections actual-connections / 2  ; counted twice
         set coefficients lput (actual-connections / possible-connections) coefficients
       ]
     ]
