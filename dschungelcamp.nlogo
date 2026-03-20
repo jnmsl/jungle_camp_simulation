@@ -613,9 +613,9 @@ to-report choose-vote-target [candidates]
     ]
   ]
   if strategy = "freerider" [
-    ; Vote for whoever noticed their freeriding (lowest trust toward me)
-    report min-one-of candidates [
-      [trust-value] of link [who] of myself who
+    ; Vote for most threatening agent: high reputation + low trust = likely to organize my elimination
+    report max-one-of candidates [
+      reputation-score * (1 - [trust-value] of link who [who] of myself)
     ]
   ]
   if strategy = "social" [
