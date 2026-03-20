@@ -30,7 +30,6 @@ globals [
   base-energy-cost         ; Daily energy cost per agent
   trust-alpha              ; Beta distribution prior alpha
   trust-beta               ; Beta distribution prior beta
-  cooperation-history      ; For tracking global cooperation rate
   total-cooperations       ; Total cooperative actions observed
   total-interactions       ; Total interactions observed
 ]
@@ -216,6 +215,9 @@ to go
     stop
   ]
 
+  ; Update days survived (before elimination so eliminated agents get correct count)
+  ask active-agents [ set days-survived current-day ]
+
   ; === PHASE 1: CHALLENGE ===
   challenge-phase active-agents
 
@@ -232,13 +234,12 @@ to go
   ]
 
   ; === UPDATE METRICS ===
+  ; Recompute active agents after possible elimination
+  set active-agents turtles with [not eliminated?]
   update-global-metrics active-agents
 
   ; === UPDATE VISUALS ===
   update-visuals
-
-  ; Update days survived
-  ask active-agents [ set days-survived current-day ]
 
   tick
 end
@@ -265,26 +266,31 @@ to challenge-phase [active-agents]
       set energy energy - 10  ; Challenges cost energy
 
       ; Update trust: all active agents observe this cooperation
+      ; Each link encounter is 1 observation of the challenger's action
+      let active-link-count 0
       ask my-links with [other-end != nobody and not [eliminated?] of other-end] [
         set encounters encounters + 1
         set cooperations cooperations + 1
         update-trust-value
+        set active-link-count active-link-count + 1
       ]
 
-      set total-cooperations total-cooperations + 1
-      set total-interactions total-interactions + 1
+      set total-cooperations total-cooperations + active-link-count
+      set total-interactions total-interactions + active-link-count
     ] [
       ; Failed/refused challenge
       set energy energy - 3  ; Small energy cost even for refusing
 
       ; Update trust: all active agents observe this defection
+      let active-link-count 0
       ask my-links with [other-end != nobody and not [eliminated?] of other-end] [
         set encounters encounters + 1
         ; No cooperation increment
         update-trust-value
+        set active-link-count active-link-count + 1
       ]
 
-      set total-interactions total-interactions + 1
+      set total-interactions total-interactions + active-link-count
     ]
   ]
 end
@@ -380,23 +386,22 @@ to social-encounter [agent-a agent-b]
   if link-ab = nobody [ stop ]
 
   ask link-ab [
-    set encounters encounters + 1
+    ; Each encounter counts as 2 interactions (one per agent)
+    set encounters encounters + 2
 
     ; Determine if this is a cooperative encounter
     let a-cooperates? [decide-social-cooperation link-ab] of agent-a
     let b-cooperates? [decide-social-cooperation link-ab] of agent-b
 
-    ; If both cooperate, mutual benefit
-    if a-cooperates? and b-cooperates? [
-      set cooperations cooperations + 2
-      set total-cooperations total-cooperations + 2
-    ]
-    ; If one cooperates, partial benefit
-    if a-cooperates? xor b-cooperates? [
+    ; Count each agent's cooperation separately
+    if a-cooperates? [
       set cooperations cooperations + 1
       set total-cooperations total-cooperations + 1
     ]
-    ; If neither cooperates, no change to cooperations
+    if b-cooperates? [
+      set cooperations cooperations + 1
+      set total-cooperations total-cooperations + 1
+    ]
 
     set total-interactions total-interactions + 2
     update-trust-value
