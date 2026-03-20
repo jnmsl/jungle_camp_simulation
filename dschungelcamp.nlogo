@@ -225,7 +225,10 @@ to go
     set season-over? true
     if num-active = 1 [
       set winner one-of active-agents
-      ask winner [ set label (word who " WINNER!") ]
+      ask winner [
+        set days-survived current-day
+        set label (word who " WINNER!")
+      ]
     ]
     stop
   ]
