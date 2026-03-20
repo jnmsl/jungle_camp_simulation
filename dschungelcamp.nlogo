@@ -30,6 +30,7 @@ globals [
   base-energy-cost         ; Daily energy cost per agent
   trust-alpha              ; Beta distribution prior alpha
   trust-beta               ; Beta distribution prior beta
+  link-break-threshold     ; Trust below this hides the link (broken relationship)
   total-cooperations       ; Total cooperative actions observed
   total-interactions       ; Total interactions observed
 ]
@@ -84,6 +85,7 @@ to setup
   set base-energy-cost 5
   set trust-alpha 1  ; Prior: uniform
   set trust-beta 1
+  set link-break-threshold 0.2  ; Links hidden when trust drops below this
   set total-cooperations 0
   set total-interactions 0
 
@@ -441,20 +443,33 @@ to update-trust-value
 end
 
 to update-link-appearance
-  ; Color and thickness based on trust
-  ifelse trust-value > 0.7 [
-    set color green
-    set relationship-type "alliance"
-    set thickness 0.3
+  let both-active? (not [eliminated?] of end1 and not [eliminated?] of end2)
+  if not both-active? [ stop ]
+
+  ; Break links when trust drops too low (broken relationship)
+  ifelse trust-value < link-break-threshold [
+    set hidden? true
+    set relationship-type "broken"
   ] [
-    ifelse trust-value < 0.3 [
-      set color red
-      set relationship-type "rival"
-      set thickness 0.2
+    ; Restore broken links when trust recovers above threshold
+    if hidden? [
+      set hidden? false
+    ]
+    ; Color and thickness based on trust
+    ifelse trust-value > 0.7 [
+      set color green
+      set relationship-type "alliance"
+      set thickness 0.3
     ] [
-      set color gray
-      set relationship-type "neutral"
-      set thickness 0.1
+      ifelse trust-value < 0.3 [
+        set color red
+        set relationship-type "rival"
+        set thickness 0.2
+      ] [
+        set color gray
+        set relationship-type "neutral"
+        set thickness 0.1
+      ]
     ]
   ]
 end
@@ -464,7 +479,7 @@ to gossip-phase [active-agents]
   ; Each agent asks one neighbor about a third party
   ask active-agents [
     let me self
-    let my-neighbors link-neighbors with [not eliminated?]
+    let my-neighbors link-neighbors with [not eliminated? and not [hidden?] of link who [who] of myself]
     if count my-neighbors >= 2 [
       ; Pick a neighbor to gossip with
       let gossip-partner one-of my-neighbors
@@ -499,6 +514,7 @@ to update-alliances [active-agents]
     let me self
     let strong-allies link-neighbors with [
       not eliminated? and
+      not [hidden?] of link who [who] of me and
       [trust-value] of link who [who] of me > 0.7
     ]
     ifelse any? strong-allies [
@@ -709,12 +725,15 @@ to-report network-density
 end
 
 to-report clustering-coefficient
-  ; Average local clustering coefficient
+  ; Average local clustering coefficient (visible links only)
   let active-agents turtles with [not eliminated?]
   ifelse count active-agents > 2 [
     let coefficients []
     ask active-agents [
-      let my-neighbors link-neighbors with [not eliminated?]
+      let me self
+      let my-neighbors link-neighbors with [
+        not eliminated? and not [hidden?] of link who [who] of me
+      ]
       let k count my-neighbors
       if k >= 2 [
         let possible-connections k * (k - 1) / 2
@@ -722,7 +741,8 @@ to-report clustering-coefficient
         ask my-neighbors [
           let me-neighbor self
           ask other my-neighbors [
-            if link-neighbor? me-neighbor [
+            let lnk link who [who] of me-neighbor
+            if lnk != nobody and not [hidden?] of lnk [
               set actual-connections actual-connections + 1
             ]
           ]
