@@ -521,7 +521,7 @@ end
 
 to elimination-phase [active-agents]
   let num-active count active-agents
-  if num-active <= 2 [ stop ]  ; Need at least 3 to vote
+  if num-active <= 1 [ stop ]  ; No elimination if 1 or fewer contestants
 
   ; Reset votes
   ask active-agents [
