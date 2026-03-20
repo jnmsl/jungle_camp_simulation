@@ -1164,7 +1164,7 @@ MONITOR
 870
 455
 Winner
-ifelse-value (winner != nobody) [word [who] of winner \" (\" [strategy] of winner \")\"] [\"-\"]
+ifelse-value (winner != nobody) [(word [who] of winner " (" [strategy] of winner ")")] ["-"]
 0
 1
 11
