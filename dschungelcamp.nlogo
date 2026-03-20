@@ -180,9 +180,16 @@ end
 to layout-agents
   ; Arrange in a circle
   layout-circle turtles (max-pxcor * 0.7)
+
   ; Move eliminated agents to the side
   ask turtles with [eliminated?] [
-    setxy (max-pxcor - 2) (max-pycor - 2 - (elimination-day * 2))
+    ; Calculate a safe Y coordinate by scaling down the elimination day
+    let safe-y (max-pycor - 2 - ((elimination-day / elimination-interval) * 2))
+
+    ; Extra safety: prevent the y-coordinate from ever going below the world boundary
+    if safe-y < min-pycor [ set safe-y min-pycor ]
+
+    setxy (max-pxcor - 2) safe-y
   ]
 end
 
