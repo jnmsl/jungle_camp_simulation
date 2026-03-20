@@ -101,18 +101,29 @@ to setup
 end
 
 to create-contestants
+  ; Normalize strategy percentages if they exceed 100% (remainder = social)
+  let total-pct pct-cooperators + pct-strategists + pct-freeriders
+  let norm-coop pct-cooperators
+  let norm-strat pct-strategists
+  let norm-free pct-freeriders
+  if total-pct > 100 [
+    set norm-coop pct-cooperators * 100 / total-pct
+    set norm-strat pct-strategists * 100 / total-pct
+    set norm-free pct-freeriders * 100 / total-pct
+  ]
+
   create-turtles num-contestants [
-    ; Assign strategy based on slider proportions
+    ; Assign strategy based on (normalized) slider proportions
     let roll random 100
-    ifelse roll < pct-cooperators [
+    ifelse roll < norm-coop [
       set strategy "cooperator"
       set color green
     ] [
-      ifelse roll < (pct-cooperators + pct-strategists) [
+      ifelse roll < (norm-coop + norm-strat) [
         set strategy "strategist"
         set color blue
       ] [
-        ifelse roll < (pct-cooperators + pct-strategists + pct-freeriders) [
+        ifelse roll < (norm-coop + norm-strat + norm-free) [
           set strategy "freerider"
           set color red
         ] [
