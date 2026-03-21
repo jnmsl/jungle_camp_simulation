@@ -142,32 +142,26 @@
 \end{frame}
 
 \begin{frame}{9. Results -- Strategy Survival \& Trust}
-    % INSTRUCTIONS FOR PRESENTERS:
-    % Insert your NetLogo plots here.
-    % 1. Strategy Survival Plot (shows line graphs of surviving agents by type)
-    % 2. Trust Evolution Plot (shows avg-trust rising or falling over time)
+    \textbf{Experiment A -- Baseline} (12 agents, 30/30/20 split, gossip on):
     \begin{itemize}
-        \item \textbf{Observation 1:} [Add your observation from the Strategy Survival Plot here. E.g., Strategists usually survive the longest].
-        \item \textbf{Observation 2:} [Add your observation from the Trust Evolution Plot here. E.g., Trust plummets right before eliminations].
+        \item \textbf{Strategy Survival:} Free-riders are eliminated first (all gone by day 12), followed by strategists (day 15) and social agents. Cooperators persist the longest, forming the final survivors.
+        \item \textbf{Trust Evolution:} Average trust rises steadily from $0.50 \to 0.95$ over the 33-day season. The steepest increases occur after free-rider eliminations remove the least cooperative agents from the network.
+        \item \textbf{Cooperation Rate:} Climbs from $57\%$ to $74\%$ as chronic defectors are voted out, creating a positive feedback loop between cooperation and trust.
     \end{itemize}
 \end{frame}
 
 \begin{frame}{10. Results -- Network Metrics \& Cooperation}
-    % INSTRUCTIONS FOR PRESENTERS:
-    % Insert your NetLogo plots here.
-    % 1. Network Metrics Plot (Density and Clustering Coefficient)
-    % 2. Cooperation Rate or Food & Energy Plot
+    \textbf{Experiment B -- Free-Rider Crash} (80\% free-riders):
     \begin{itemize}
-        \item \textbf{Observation 1:} [Add observation about Network Density. E.g., Density stays high initially but fractures into tight cliques].
-        \item \textbf{Observation 2:} [Add observation about Cooperation/Resources. E.g., Free-riders cause the food pool to crash, lowering average energy].
+        \item \textbf{Network Density:} Drops from $1.0$ to $0.83$ within just 9 days as widespread defection erodes trust below the link-break threshold ($0.2$). In contrast, the baseline maintains density $\approx 1.0$ throughout.
+        \item \textbf{Trust Collapse:} Average trust \emph{falls} from $0.50$ to $0.41$ (vs.\ baseline's rise to $0.95$), and reputation drops to $0.37$.
+        \item \textbf{Resource Starvation:} Cooperation rate is only $\sim 32\%$ (vs.\ $74\%$ baseline). Average energy plummets from $90$ to $45$ in 9 days, triggering the starvation penalty ($-0.1$ reputation) across nearly all agents.
     \end{itemize}
 \end{frame}
 
 \begin{frame}{11. Demo / NetLogo Interface}
     \begin{center}
-        % INSTRUCTIONS: Add a wide screenshot of your NetLogo interface here.
-        % \includegraphics[width=0.9\linewidth]{interface_screenshot.png}
-        \textit{[Insert Screenshot of the NetLogo 2D View and Dashboards here]}
+        \includegraphics[width=0.9\linewidth]{experiments/baseline/dschungelcamp interface.png}
     \end{center}
 \end{frame}
 
@@ -178,7 +172,7 @@
 \begin{frame}{12. Conclusion \& Future Work}
     \begin{enumerate}
         \item \textbf{Summary:} The simulation successfully models complex social dynamics, showing how macro-behaviors (alliances, scapegoating) emerge from simple BDI micro-rules and computational trust. % [cite: 3, 4, 188]
-        \item \textbf{Key Findings:} [Insert your final conclusion about which strategy is dominant based on your test runs].
+        \item \textbf{Key Findings (Experiment C -- 5 runs):} Cooperators are the statistically dominant strategy, winning 4 out of 5 runs (80\%). Their high bravery builds trust capital through consistent challenge participation, which translates into voting protection. Free-riders are eliminated earliest in every run (by day 12) due to chronic defection collapsing their trust scores. Strategists won 1 of 5 runs, surviving through selective cooperation when cooperator numbers were low.
         \item \textbf{Future Work:}
         \begin{itemize}
             \item Integrate \textbf{viewer voting} to simulate external elimination pressure. % [cite: 200]
