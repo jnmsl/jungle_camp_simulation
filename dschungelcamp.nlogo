@@ -361,11 +361,7 @@ to food-sharing-phase [active-agents]
     if energy > 100 [ set energy 100 ]
     if energy < 0 [ set energy 0 ]
 
-    ; Low energy affects behavior
-    if energy < 20 [
-      set reputation-score reputation-score - 0.02  ; Weak agents lose reputation
-      if reputation-score < 0 [ set reputation-score 0 ]
-    ]
+    ; Low energy penalty is now applied inside update-agent-reputation
   ]
 end
 
@@ -518,7 +514,7 @@ to gossip-phase [active-agents]
       if gossip-target != nobody and gossip-partner != nobody [
         ; Get gossip-partner's trust of gossip-target (partner→target)
         let partner-link trust-link ([who] of gossip-partner) ([who] of gossip-target)
-        if partner-link != nobody [
+        if partner-link != nobody and not [hidden?] of partner-link [
           let indirect-trust [trust-value] of partner-link
 
           ; Update MY trust of gossip-target (me→target)
@@ -663,16 +659,24 @@ to-report choose-vote-target [candidates]
 end
 
 to update-agent-reputation
-  ; Reputation = average of all other active agents' trust IN this agent.
-  ; in-trust-link-neighbors = agents with a directed link TO me = agents who track my trustworthiness.
-  ; [out-trust-link-to me] of N = N's trust of me (N→me link).
+  ; Reputation = average of all other active agents' trust IN this agent,
+  ; with a penalty applied if the agent is currently starving.
   let me self
   let active-neighbors in-trust-link-neighbors with [not eliminated?]
   if any? active-neighbors [
     let total-trust sum [
       [trust-value] of out-trust-link-to me
     ] of active-neighbors
-    set reputation-score total-trust / count active-neighbors
+
+    let calculated-rep (total-trust / count active-neighbors)
+
+    ; Apply penalty if the agent is currently starving
+    if energy < 20 [
+      set calculated-rep calculated-rep - 0.1
+    ]
+
+    if calculated-rep < 0 [ set calculated-rep 0 ]
+    set reputation-score calculated-rep
   ]
 end
 
