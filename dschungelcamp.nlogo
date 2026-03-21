@@ -704,10 +704,12 @@ to update-visuals
 
     ; Update color intensity based on energy
     let energy-factor energy / 100
-    if strategy = "cooperator" [ set color scale-color green energy-factor 0 1.5 ]
-    if strategy = "strategist" [ set color scale-color blue energy-factor 0 1.5 ]
-    if strategy = "freerider" [ set color scale-color red energy-factor 0 1.5 ]
-    if strategy = "social" [ set color scale-color yellow energy-factor 0 1.5 ]
+
+    ; CHANGE: Replaced the 0 with -0.5 to prevent agents from turning completely black
+    if strategy = "cooperator" [ set color scale-color green energy-factor -0.5 1.5 ]
+    if strategy = "strategist" [ set color scale-color blue energy-factor -0.5 1.5 ]
+    if strategy = "freerider" [ set color scale-color red energy-factor -0.5 1.5 ]
+    if strategy = "social" [ set color scale-color yellow energy-factor -0.5 1.5 ]
   ]
 end
 
