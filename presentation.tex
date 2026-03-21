@@ -41,53 +41,63 @@
 % ---------------------------------------------------------------
 
 \begin{frame}{2. Agent Architecture (BDI)}
-    % TODO: BDI mapping table or diagram
-    %   Beliefs  = trust values toward each neighbor, own reputation, energy level
-    %   Desires  = survive (avoid elimination), win (be last standing)
-    %   Intentions = strategy-dependent action selection (cooperate/defect in challenges, vote target choice)
-    % Course parallel: Wooldridge's BDI framework, rational agents
+    \begin{itemize}
+        \item \textbf{Beliefs:} Trust values directed toward each neighbor, perception of own reputation, and current energy levels. % [cite: 3, 24, 25, 36]
+        \item \textbf{Desires:} Survive (avoid elimination), maintain energy, and ultimately win (be the last one standing). % [cite: 3, 14, 63]
+        \item \textbf{Intentions:} Strategy-dependent action selection. This includes deciding whether to cooperate or defect during challenges and social encounters, and choosing a specific target during elimination voting. % [cite: 3, 73, 104, 144]
+        \item \textbf{Course Parallel:} Maps to Wooldridge's BDI framework for rational agents. % [cite: 201]
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{3. Agent Strategies \& Personality}
     \begin{columns}[T]
         \begin{column}{0.48\textwidth}
-            % TODO: describe each strategy's behavior
-            %   Cooperator (green): reliable, almost always does challenges
-            %   Strategist (blue): selective cooperation based on trust/reputation
-            %   Free-rider (red): avoids challenges, exploits group
-            %   Social (yellow): builds connections, follows group consensus
+            \textbf{Agent Strategies:}
+            \begin{itemize}
+                \item \textbf{Cooperator (Green):} Reliable, almost always does challenges to build trust. % [cite: 48, 83]
+                \item \textbf{Strategist (Blue):} Selective cooperation based on current energy and reputation needs. % [cite: 48, 84]
+                \item \textbf{Free-rider (Red):} Avoids challenges, exploiting group resources. % [cite: 49, 85]
+                \item \textbf{Social (Yellow):} Builds connections, highly cooperative in social settings. % [cite: 49, 117]
+            \end{itemize}
         \end{column}
         \begin{column}{0.48\textwidth}
-            % TODO: personality trait table
-            %   openness (0-1): likelihood to form new connections
-            %   loyalty (0-1): weight given to existing trust
-            %   bravery (0-1): willingness to accept challenges
-            %   Each strategy has different trait distributions
+            \textbf{Personality Traits (0.0 - 1.0):}
+            \begin{itemize}
+                \item \textbf{Openness:} Likelihood to form new social connections. Highest in Social agents (0.8+). % [cite: 31, 54]
+                \item \textbf{Loyalty:} Weight given to existing trust. Highest in Cooperators (0.7+). % [cite: 32, 53]
+                \item \textbf{Bravery:} Willingness to accept energy-draining challenges. Lowest in Free-riders (0.1+). % [cite: 33, 54]
+            \end{itemize}
         \end{column}
     \end{columns}
 \end{frame}
 
 \begin{frame}{4. Trust Model (Mui et al.)}
-    % TODO: Direct trust — Beta distribution model
-    %   Formula: T_ab = (alpha + p) / (alpha + beta + n)
-    %   alpha, beta = prior parameters (1,1 = uniform prior)
-    %   p = cooperative encounters, n = total encounters
-    %   Trust updates after every challenge observation and social encounter
-    % Course parallel: Mui et al. computational trust, Beta distribution
+    \begin{itemize}
+        \item \textbf{Computational Model:} Direct trust is calculated using a Beta distribution model. % [cite: 4, 118]
+        \item \textbf{Formula:} $$T_{ab} = \frac{\alpha + p}{\alpha + \beta + n}$$
+        \item \textbf{Parameters:}
+        \begin{itemize}
+            \item $\alpha, \beta$: Prior parameters (set to 1, 1 for a uniform prior). % [cite: 43, 44]
+            \item $p$: Number of cooperative encounters by agent $B$ observed by $A$. % [cite: 38, 118]
+            \item $n$: Total encounters between $A$ and $B$. % [cite: 37, 118]
+        \end{itemize}
+        \item \textbf{Dynamics:} Trust updates after every challenge observation and pairwise social encounter. % [cite: 76, 108, 110]
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{5. Gossip \& Reputation}
-    % TODO: Two mechanisms:
-    %   1) Gossip (indirect trust propagation):
-    %      T_ac(new) = T_ac * (1 - gamma) + T_bc * gamma
-    %      where gamma = gossip spread factor (0.3)
-    %      Agents ask a neighbor about a third party
-    %
-    %   2) Reputation (global score):
-    %      R_i = (1/|N|) * sum(T_ji) for all active neighbors j
-    %      Weighted average of all others' trust in agent i
-    %
-    % Course parallel: indirect trust, reputation systems, distributed trust
+    \begin{itemize}
+        \item \textbf{Gossip (Indirect Trust):} Agents ask a neighbor about a third party, propagating trust indirectly. % [cite: 97, 126]
+        \begin{itemize}
+            \item Influenced by a \textit{Gossip Spread Factor} ($\gamma = 0.3$). % [cite: 14, 43, 132]
+        \end{itemize}
+        \item \textbf{Reputation (Global Score):}
+        \begin{itemize}
+            \item Calculated as the average of all other active agents' trust IN the target agent. % [cite: 159, 162]
+            \item $$R_i = \frac{1}{|N|} \sum_{j \in N} T_{ji}$$
+            \item \textbf{Starvation Penalty:} Agents with critically low energy ($< 20$) suffer a $0.1$ reputation penalty, simulating perceived weakness. % [cite: 160, 163]
+        \end{itemize}
+    \end{itemize}
 \end{frame}
 
 % ---------------------------------------------------------------
@@ -95,28 +105,23 @@
 % ---------------------------------------------------------------
 
 \begin{frame}{6. Simulation Phases \& Elimination}
-    % TODO: The 4 daily phases:
-    %   1. Challenge (Dschungelprüfung): one agent chosen, cooperate = earn food, defect = save energy
-    %   2. Food Sharing: resources distributed, daily energy cost applied
-    %   3. Social Interaction: 1-3 pairwise encounters per agent, trust updated
-    %   4. Elimination (every N days): agents vote, most votes = eliminated
-    %
-    % Voting strategies differ per type:
-    %   Cooperator: votes for least trusted (punish defectors)
-    %   Strategist: votes for highest reputation outside alliance (eliminate threats)
-    %   Free-rider: votes for whoever distrusts them most (self-preservation)
-    %   Social: follows alliance consensus
-    %
-    % Course parallel: game theory, cooperation vs. defection
+    Every tick represents one day, split into 4 phases: % [cite: 6, 61, 190]
+    \begin{enumerate}
+        \item \textbf{Challenge Phase:} One agent faces a "Dschungelprüfung". Cooperating earns food but costs energy (-10); defecting saves energy (-3). % [cite: 71, 74, 78]
+        \item \textbf{Food Sharing:} Food pool is distributed to restore energy; daily base energy costs are applied. % [cite: 88, 91]
+        \item \textbf{Social Phase:} Pairwise interactions update direct trust, followed by gossip and alliance updates. % [cite: 94, 97, 99]
+        \item \textbf{Elimination:} Every $N$ days, agents vote. The agent with the most votes is eliminated. % [cite: 69, 145]
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{Voting Logic:} Cooperators punish defectors, Strategists target threats, Free-riders vote defensively, and Socials vote with their alliance. % [cite: 152, 153, 155, 156]
 \end{frame}
 
 \begin{frame}{7. Cooperation vs.\ Defection}
-    % TODO: Game-theoretic framing
-    %   Challenge decisions: cooperate (earn food for group, lose energy) vs. defect (save energy, no food)
-    %   Social encounters: both agents independently decide to cooperate or defect
-    %   Strategy-dependent decision functions (show the logic)
-    %   Tension: short-term individual gain vs. long-term group benefit / reputation
-    % Course parallel: Prisoner's Dilemma, iterated games, social dilemmas
+    \begin{itemize}
+        \item \textbf{Game-Theoretic Framing:} The model presents continuous Prisoner's Dilemma scenarios. % [cite: 5]
+        \item \textbf{Challenges:} Individual vs. Group benefit. Cooperating earns a reward for the shared food pool but drains the individual's energy, making them vulnerable. Defecting preserves individual energy but starves the camp. % [cite: 74, 78, 88]
+        \item \textbf{Social Encounters:} Agents independently decide to cooperate or defect based on their strategy and current trust levels, heavily impacting bidirectional trust updates. % [cite: 104, 108, 110]
+    \end{itemize}
 \end{frame}
 
 % ---------------------------------------------------------------
@@ -124,36 +129,46 @@
 % ---------------------------------------------------------------
 
 \begin{frame}{8. Network Structure \& Evolution}
-    % TODO: Initial state: complete graph (all contestants know each other)
-    %   Alliance formation: mutual trust > 0.7 creates alliance links
-    %   Elimination shrinks the network: links hidden, layout updates
-    %   Link coloring: green (alliance, trust>0.7), red (rival, trust<0.3), gray (neutral)
-    %   Metrics: network density, clustering coefficient
-    % Course parallel: social network evolution, shrinking networks, community detection
+    \begin{itemize}
+        \item \textbf{Initialization:} Begins as a complete directed graph where everyone knows everyone (neutral trust = 0.5). % [cite: 46, 55]
+        \item \textbf{Link States \& Visuals:}
+        \begin{itemize}
+            \item \textbf{Alliance (Green, thick):} Trust $> 0.7$. Prompts formal alliance grouping. % [cite: 124, 136]
+            \item \textbf{Rival (Red, thin):} Trust $< 0.3$. % 
+            \item \textbf{Broken (Hidden):} Trust drops below the $0.2$ threshold. % [cite: 44, 120]
+        \end{itemize}
+        \item \textbf{Evolution:} The network shrinks dynamically. When an agent is eliminated, they are moved aside and their directed links are hidden, heavily altering network density and clustering coefficients. % [cite: 58, 147]
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{9. Results -- Strategy Survival \& Trust}
-    % TODO: Insert NetLogo plots/screenshots:
-    %   - Strategy Survival plot (which strategies last longest)
-    %   - Trust Evolution plot (average trust over time)
-    %   - Key findings: do cooperators or strategists tend to win?
+    % INSTRUCTIONS FOR PRESENTERS:
+    % Insert your NetLogo plots here.
+    % 1. Strategy Survival Plot (shows line graphs of surviving agents by type)
+    % 2. Trust Evolution Plot (shows avg-trust rising or falling over time)
+    \begin{itemize}
+        \item \textbf{Observation 1:} [Add your observation from the Strategy Survival Plot here. E.g., Strategists usually survive the longest].
+        \item \textbf{Observation 2:} [Add your observation from the Trust Evolution Plot here. E.g., Trust plummets right before eliminations].
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{10. Results -- Network Metrics \& Cooperation}
-    % TODO: Insert NetLogo plots/screenshots:
-    %   - Network Metrics plot (density + clustering over time)
-    %   - Cooperation Rate plot
-    %   - Food & Energy plot
-    %   - Reputation Distribution
-    %   - Key findings: how do metrics change around elimination events?
+    % INSTRUCTIONS FOR PRESENTERS:
+    % Insert your NetLogo plots here.
+    % 1. Network Metrics Plot (Density and Clustering Coefficient)
+    % 2. Cooperation Rate or Food & Energy Plot
+    \begin{itemize}
+        \item \textbf{Observation 1:} [Add observation about Network Density. E.g., Density stays high initially but fractures into tight cliques].
+        \item \textbf{Observation 2:} [Add observation about Cooperation/Resources. E.g., Free-riders cause the food pool to crash, lowering average energy].
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{11. Demo / NetLogo Interface}
-    % TODO: Screenshot(s) of the NetLogo interface
-    %   Show the world view with agents, colored links, eliminated agents on the side
-    %   Show the control panel (sliders, buttons)
-    %   Show the plots panel
-    %   \includegraphics[width=\linewidth]{screenshot.png}
+    \begin{center}
+        % INSTRUCTIONS: Add a wide screenshot of your NetLogo interface here.
+        % \includegraphics[width=0.9\linewidth]{interface_screenshot.png}
+        \textit{[Insert Screenshot of the NetLogo 2D View and Dashboards here]}
+    \end{center}
 \end{frame}
 
 % ---------------------------------------------------------------
@@ -162,23 +177,23 @@
 
 \begin{frame}{12. Conclusion \& Future Work}
     \begin{enumerate}
-        \item \textbf{Summary:}
-        % TODO
-        \item \textbf{Key Findings:}
-        % TODO
-        \item \textbf{Limitations:}
-        % TODO
+        \item \textbf{Summary:} The simulation successfully models complex social dynamics, showing how macro-behaviors (alliances, scapegoating) emerge from simple BDI micro-rules and computational trust. % [cite: 3, 4, 188]
+        \item \textbf{Key Findings:} [Insert your final conclusion about which strategy is dominant based on your test runs].
         \item \textbf{Future Work:}
-        % TODO: viewer voting, challenge difficulty, strategy adaptation, emotional state, resource hoarding
+        \begin{itemize}
+            \item Integrate \textbf{viewer voting} to simulate external elimination pressure. % [cite: 200]
+            \item Implement dynamic \textbf{challenge difficulty}. % [cite: 200]
+            \item Add \textbf{personality evolution} (agents learning/adapting strategies) and \textbf{resource hoarding}. % [cite: 200]
+        \end{itemize}
     \end{enumerate}
 \end{frame}
 
 \begin{frame}{References}
     \footnotesize
     \begin{thebibliography}{99}
-        \bibitem{Mui} Mui, L., Mohtashemi, M., \& Halberstadt, A. (2002). \textit{A Computational Model of Trust and Reputation}. HICSS.
-        \bibitem{Wooldridge} Wooldridge, M. (2002). \textit{An Introduction to Multiagent Systems}. Wiley.
-        \bibitem{NetLogo} Wilensky, U. (1999). \textit{NetLogo}. Center for Connected Learning, Northwestern University.
+        \bibitem{Mui} Mui, L., Mohtashemi, M., \& Halberstadt, A. (2001). \textit{A Computational Model of Trust and Reputation}. % [cite: 200]
+        \bibitem{Wooldridge} Wooldridge, M. (2002). \textit{An Introduction to Multiagent Systems}. % [cite: 201]
+        \bibitem{Hassas} Hassas S., Di Marzo-Serugendo G., Karageorgos A. and Castelfranchi C. (2006). \textit{On self-organising mechanisms}. % [cite: 202]
     \end{thebibliography}
 \end{frame}
 
